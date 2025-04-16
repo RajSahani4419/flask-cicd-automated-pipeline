@@ -1,20 +1,37 @@
+
 pipeline {
     agent any
+
+    environment {
+        IMAGE_NAME = 'flask-app'
+        CONTAINER_NAME = 'flask-container'
+    }
+
     stages {
-        stage('Build') {
+        stage('Build Docker Image') {
             steps {
-                sh 'pip install -r requirements.txt'
+                sh '''
+                    docker build -t $IMAGE_NAME .
+                '''
             }
         }
-        stage('Test') {
+
+        stage('Stop and Remove Existing Container') {
             steps {
-                sh 'pytest'
+                sh '''
+                    docker stop $CONTAINER_NAME || true
+                    docker rm $CONTAINER_NAME || true
+                '''
             }
         }
-        stage('Deploy') {
+
+        stage('Run Docker Container') {
             steps {
-                sh 'echo Deploying Flask app...'
+                sh '''
+                    docker run -d --name $CONTAINER_NAME -p 5000:5000 $IMAGE_NAME
+                '''
             }
         }
     }
 }
+
